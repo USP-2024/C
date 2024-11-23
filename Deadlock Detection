@@ -1,0 +1,95 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define P 5   // Number of processes
+#define R 3   // Number of resources
+
+// Function to check if there is a cycle in the Resource Allocation Graph (RAG)
+bool isSafe(int alloc[][R], int req[][R], int available[], int n, int m) {
+    int work[R];
+    bool finish[n];
+    int safeSeq[n];
+    int count = 0;
+
+    // Initialize the work array with available resources
+    for (int i = 0; i < m; i++) {
+        work[i] = available[i];
+    }
+
+    // Initialize the finish array to false
+    for (int i = 0; i < n; i++) {
+        finish[i] = false;
+    }
+
+    // Try to find a process that can finish
+    while (count < n) {
+        bool progressMade = false;
+        for (int i = 0; i < n; i++) {
+            // If the process is not finished and its request can be satisfied
+            if (!finish[i]) {
+                bool canProceed = true;
+                for (int j = 0; j < m; j++) {
+                    if (req[i][j] > work[j]) {
+                        canProceed = false;
+                        break;
+                    }
+                }
+
+                // If the process can finish, simulate it
+                if (canProceed) {
+                    for (int j = 0; j < m; j++) {
+                        work[j] += alloc[i][j];  // Release the allocated resources
+                    }
+                    safeSeq[count++] = i;
+                    finish[i] = true;
+                    progressMade = true;
+                    break;
+                }
+            }
+        }
+
+        // If no process could be made to proceed, we have deadlock
+        if (!progressMade) {
+            printf("Deadlock detected!\n");
+            return false;
+        }
+    }
+
+    // If all processes can finish, then the system is in a safe state
+    printf("No deadlock detected. Safe sequence: ");
+    for (int i = 0; i < n; i++) {
+        printf("P%d ", safeSeq[i]);
+    }
+    printf("\n");
+    return true;
+}
+
+int main() {
+    // Example allocation and request matrices for 5 processes and 3 resources
+
+    // Allocation matrix
+    int alloc[P][R] = {
+        {0, 1, 0},  // Process P0 holds 0, 1, 0 of resources
+        {2, 0, 0},  // Process P1 holds 2, 0, 0 of resources
+        {3, 0, 2},  // Process P2 holds 3, 0, 2 of resources
+        {2, 1, 1},  // Process P3 holds 2, 1, 1 of resources
+        {0, 0, 2}   // Process P4 holds 0, 0, 2 of resources
+    };
+
+    // Request matrix
+    int req[P][R] = {
+        {0, 0, 0},  // Process P0 requests 0, 0, 0 of resources
+        {2, 1, 0},  // Process P1 requests 2, 1, 0 of resources
+        {3, 0, 2},  // Process P2 requests 3, 0, 2 of resources
+        {2, 1, 1},  // Process P3 requests 2, 1, 1 of resources
+        {0, 0, 2}   // Process P4 requests 0, 0, 2 of resources
+    };
+
+    // Available resources
+    int available[R] = {3, 3, 2};  // Resources A, B, C available: 3, 3, 2
+
+    // Run the deadlock detection
+    isSafe(alloc, req, available, P, R);
+
+    return 0;
+}
